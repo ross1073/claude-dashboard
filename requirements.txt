@@ -1,0 +1,3 @@
+# Standard library only — no dependencies required.
+# (urllib is used for the Admin API; json/pathlib/etc. are stdlib.)
+# This file is here as a marker; nothing to install.

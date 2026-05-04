@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Claude Dashboard</title>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+  <header class="top">
+    <h1>⚡ Claude <span class="accent">Dashboard</span></h1>
+    <div class="meta" id="meta">loading…</div>
+  </header>
+
+  <!-- Hero tiles -->
+  <section class="section">
+    <h2 class="section-title"><span data-bind="hero.title">Spend</span><span class="hint" data-bind="hero.hint"></span></h2>
+    <div class="grid tiles">
+      <div class="card tile" id="tile-today">
+        <div class="label" data-bind="tile.today.label">💰 Today</div>
+        <div class="big" data-bind="spend.today.usd">—</div>
+        <div class="delta" data-bind="spend.today.delta">—</div>
+      </div>
+      <div class="card tile" id="tile-week">
+        <div class="label" data-bind="tile.week.label">📅 Last 7 days</div>
+        <div class="big" data-bind="spend.week.usd">—</div>
+        <div class="delta" data-bind="spend.week.sub">—</div>
+      </div>
+      <div class="card tile" id="tile-month">
+        <div class="label" data-bind="tile.month.label">🗓 This month</div>
+        <div class="big" data-bind="spend.month.usd">—</div>
+        <div class="delta" data-bind="spend.month.sub">—</div>
+      </div>
+      <div class="card tile alert" id="tile-projected">
+        <div class="label" data-bind="tile.fourth.label">🔥 Projected month</div>
+        <div class="big" data-bind="spend.projected.usd">—</div>
+        <div class="delta" data-bind="spend.projected.sub">—</div>
+      </div>
+    </div>
+    <div id="billing-banner"></div>
+  </section>
+
+  <!-- Daily trend + by-model donut -->
+  <section class="section">
+    <h2>Daily spend &amp; model mix</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>📈 Daily spend (last 90 days)</h3>
+        <div class="chart-host h-lg"><canvas id="chart-daily"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🎯 Cost by model family</h3>
+        <div class="chart-host h-lg"><canvas id="chart-family"></canvas></div>
+        <div class="kv" id="family-kv"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Token breakdown + cost by model (full names) -->
+  <section class="section">
+    <h2>Tokens</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>🔢 Token breakdown (today)</h3>
+        <div class="chart-host h-md"><canvas id="chart-tokens-today"></canvas></div>
+        <div class="kv" id="tokens-kv"></div>
+      </div>
+      <div class="card">
+        <h3>🎭 Cost by model (full)</h3>
+        <ul class="bar-list" id="cost-by-model"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Records strip -->
+  <section class="section">
+    <h2>Personal records</h2>
+    <div class="grid records">
+      <div class="card record">
+        <div class="label"><span class="emoji">🏆</span>Most expensive day</div>
+        <div class="big" data-bind="rec.exp_day.cost">—</div>
+        <div class="when" data-bind="rec.exp_day.date">—</div>
+      </div>
+      <div class="card record">
+        <div class="label"><span class="emoji">🚀</span>Most active day</div>
+        <div class="big" data-bind="rec.act_day.msgs">—</div>
+        <div class="when" data-bind="rec.act_day.date">—</div>
+      </div>
+      <div class="card record">
+        <div class="label"><span class="emoji">⏱</span>Longest session</div>
+        <div class="big" data-bind="rec.long_sess.dur">—</div>
+        <div class="when" data-bind="rec.long_sess.proj">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Activity heatmap + cost by project -->
+  <section class="section">
+    <h2>When &amp; where</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>🗓 Activity heatmap (UTC)</h3>
+        <div id="heatmap" class="heatmap"></div>
+        <div class="heatmap-legend">
+          <span>less</span>
+          <span class="swatch" style="background:#1a1f2e"></span>
+          <span class="swatch" style="background:rgba(111,162,208,0.35)"></span>
+          <span class="swatch" style="background:rgba(125,195,141,0.6)"></span>
+          <span class="swatch" style="background:#7DC38D"></span>
+          <span class="swatch" style="background:#F55636"></span>
+          <span>more</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📁 Cost by project</h3>
+        <ul class="bar-list" id="cost-by-project"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools + sub-agents + skills -->
+  <section class="section">
+    <h2>Activity</h2>
+    <div class="grid three">
+      <div class="card">
+        <h3>🔧 Tool usage</h3>
+        <div class="chart-host h-md"><canvas id="chart-tools"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🌳 Sub-agent activity</h3>
+        <ul class="bar-list" id="subagents"></ul>
+      </div>
+      <div class="card">
+        <h3>✨ Skills triggered</h3>
+        <ul class="bar-list" id="skills"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent sessions -->
+  <section class="section">
+    <h2 class="section-title"><span>Recent sessions</span><span class="hint">most recent 50</span></h2>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="sessions" id="recent-sessions">
+          <thead><tr>
+            <th>Last activity</th><th>Project</th><th>Model</th>
+            <th>Msgs</th><th>Tools</th><th>Tokens</th><th>Cost</th><th>Duration</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leaderboards -->
+  <section class="section">
+    <h2>Leaderboards</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>💸 Most expensive sessions</h3>
+        <div style="overflow-x:auto">
+          <table class="sessions" id="board-expensive">
+            <thead><tr><th>Project</th><th>Model</th><th>Msgs</th><th>Cost</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⏱ Longest sessions</h3>
+        <div style="overflow-x:auto">
+          <table class="sessions" id="board-longest">
+            <thead><tr><th>Project</th><th>Model</th><th>Msgs</th><th>Duration</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Errors + prompts + context -->
+  <section class="section">
+    <h2>Inside Claude</h2>
+    <div class="grid three">
+      <div class="card">
+        <h3>⚠️ Errors &amp; failures</h3>
+        <div class="big" data-bind="errors.count" style="font-size:30px;color:var(--orange);font-weight:800">—</div>
+        <div class="subline">total error events across all sessions</div>
+        <ul class="bar-list" id="errors-by-tool" style="margin-top:10px"></ul>
+      </div>
+      <div class="card">
+        <h3>💬 Prompt stats</h3>
+        <div class="kv" id="prompt-kv"></div>
+      </div>
+      <div class="card">
+        <h3>📦 Context window</h3>
+        <div class="subline">Largest single-session input total</div>
+        <div class="kv" id="context-kv"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin API panel -->
+  <section class="section" id="admin-section">
+    <h2>API (org-wide)</h2>
+    <div id="admin-content"></div>
+  </section>
+
+  <footer class="foot">
+    Generated locally · ~/.claude/projects · refreshed by <code>python dashboard.py</code>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

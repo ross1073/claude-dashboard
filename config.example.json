@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy this file to config.json (gitignored) and fill in values.",
+
+  "billing_mode": "subscription",
+  "_billing_mode_help": "'subscription' = you pay a flat plan fee; tile labels reframe as API-equivalent value + ROI vs your subscription. 'api' = you pay per-request API rates and the dashboard shows real API spend.",
+  "subscription_usd_per_month": 100,
+
+  "admin_api_key": "",
+  "_admin_api_key_help": "Optional. Org-wide rollups (Settings -> Admin Keys at console.anthropic.com). Starts with sk-ant-admin01-. Most useful for accounts on pay-as-you-go API; subscriptions don't itemize.",
+  "admin_window_days": 90
+}
+
