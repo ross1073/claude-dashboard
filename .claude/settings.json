@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-start-load-context.sh",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Run the memory-keeper agent (.claude/agents/memory-keeper.md). Read the session transcript and docs/status.md, then update docs/status.md in place with: decisions made, work completed, items closed, items changed, items deferred, new open items. Edit directly — do not stage for approval. If the session was trivial (no commits, no decisions, no state changes), exit silently with no edits.",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}
