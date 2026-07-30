@@ -26,7 +26,9 @@ beacon_log="docs/memory/.session-beacons.log"
 # ── memory-staleness check (loud) ───────────────────────────────────
 staleness_warning=""
 if [[ -d "$memory_dir" ]]; then
-  latest_note=$(ls -1 "$memory_dir"/[0-9]*.md 2>/dev/null | sort | tail -1)
+  # `|| true`: an empty memory dir is a NORMAL condition; ls's non-zero exit
+  # would otherwise propagate through pipefail and set -e and kill the hook.
+  latest_note=$(ls -1 "$memory_dir"/[0-9]*.md 2>/dev/null | sort | tail -1 || true)
   if [[ -n "$latest_note" ]]; then
     latest_note_date=$(basename "$latest_note" .md)
     today=$(date -u +%Y-%m-%d)
@@ -59,7 +61,12 @@ the missing daily note(s) manually or invoke memory-keeper on this session."
         # Strip non-numeric chars to compare as integers (YYYYMMDDHHMMSS).
         beacon_num=$(echo "$last_beacon_ts" | tr -d -c '0-9' | cut -c1-14)
         # Most recent session header timestamp in the note (UTC ISO).
-        last_session_ts=$(grep -oE '## Session [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' "$latest_note" 2>/dev/null | tail -n 1 | awk '{print $2}')
+        # `|| true`: no matching header is a NORMAL condition (notes in the
+        # current `# <date> — <summary>` format carry no ISO session header).
+        # Without it, grep's exit 1 propagates through pipefail to this
+        # assignment and set -e kills the whole hook silently, emitting zero
+        # bytes of context.
+        last_session_ts=$(grep -oE '## Session [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' "$latest_note" 2>/dev/null | tail -n 1 | awk '{print $2}' || true)
         if [[ -n "$last_session_ts" ]]; then
           session_num=$(echo "$last_session_ts" | tr -d -c '0-9' | cut -c1-14)
           # Beacon must be at least 10 minutes newer than the last session
@@ -120,7 +127,8 @@ echo
 
 echo "### Recent daily notes"
 if [[ -d "$memory_dir" ]]; then
-  recent=$(ls -1 "$memory_dir"/*.md 2>/dev/null | sort -r | head -2)
+  # `|| true`: same reason as above — no notes yet is normal, not an error.
+  recent=$(ls -1 "$memory_dir"/*.md 2>/dev/null | sort -r | head -2 || true)
   if [[ -z "$recent" ]]; then
     echo "_(no entries in $memory_dir yet)_"
   else
