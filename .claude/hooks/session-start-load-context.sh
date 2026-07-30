@@ -1,4 +1,42 @@
 #!/usr/bin/env bash
+# ============================================================================
+# DISABLED 2026-07-30 — UNREGISTERED FROM .claude/settings.json. DOES NOT RUN.
+#
+# Why: it duplicated the GLOBAL four-part loader, which loads the same material
+# (project brief, stage doc, per-project MEMORY index, recent daily notes) for
+# every project under ~/projects. Its four replacements are:
+#
+#   ~/.claude/hooks/project-context-load-1.sh  time anchor + docs/stage-current.md
+#   ~/.claude/hooks/project-context-load-2.sh  docs/project-brief.md
+#   ~/.claude/hooks/project-context-load-3.sh  per-project MEMORY.md index
+#   ~/.claude/hooks/project-context-load-4.sh  recent daily notes
+#
+# Two loaders meant the same documents were injected twice. But the decisive
+# difference is the budget. Each global part enforces a hard 9,000-byte ceiling
+# with exact UTF-8 byte accounting measured on the JSON-escaped output, and
+# truncates with an explicit marker naming the file and its full size. This
+# script has NO budget logic at all — it cats every file end to end.
+#
+# A SessionStart hook whose stdout exceeds ~10,000 bytes is NOT rejected: the
+# harness persists the full text and injects only a ~2KB preview, silently
+# dropping the rest. Context reads as loaded when it never arrived. This script
+# blew that cap in every repo large enough to matter, so its output was
+# routinely truncated without any signal that it had been.
+#
+# What was lost: this script carried the ONLY memory-staleness warning — the
+# check that told Ross the SessionEnd memory-keeper had failed to write a daily
+# note. That check was already dead (its `grep` for a `## Session <ISO>Z` header
+# exits 1 on notes in the current `# <date> — <summary>` format, and under
+# `set -euo pipefail` that killed the script before it printed a byte; the
+# `|| true` guards below fixed it the same day). Disabling the hook therefore
+# cost nothing on the day, but the gap is now permanent until something
+# replaces it.
+#
+# Kept on disk, not deleted, so the staleness logic can be salvaged if a
+# replacement detector is built. To re-enable, re-add it to the SessionStart
+# hooks array in .claude/settings.json — but give it a byte budget first.
+# ============================================================================
+#
 # Auto-loads user profile, project brief, recent daily notes, and current
 # stage doc (if present) into the Claude Code session as additional
 # SessionStart context.
